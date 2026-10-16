@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="referrer" content="no-referrer">
+<title>Call</title>
+<!--
+  One-tap call page for boards that run inside claude.ai, where phone (tel:) links are blocked.
+  A board links here as  <this page>#+919876543210  and the page opens the phone app with that number.
+  The number sits after the #, which browsers never send to the server, so it doesn't reach the host.
+  No scripts or fonts from anywhere else, no analytics.
+-->
+<style>
+  :root { --bg: #F4F5F8; --card: #FFFFFF; --ink: #161D2B; --muted: #5A6375; --go: #1D7449; --go-ink: #FFFFFF; color-scheme: light }
+  @media (prefers-color-scheme: dark) { :root { --bg: #11141A; --card: #191E27; --ink: #E7EAF0; --muted: #9AA2B1; --go: #63C394; --go-ink: #0B1A12; color-scheme: dark } }
+  * { box-sizing: border-box }
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: var(--bg); color: var(--ink);
+    font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; padding: 24px max(16px, env(safe-area-inset-left)) }
+  main { width: 100%; max-width: 380px; background: var(--card); border-radius: 18px; padding: 24px 20px; display: grid; gap: 16px; text-align: center }
+  .num { font: 600 1.6rem/1.2 ui-monospace, "SF Mono", Menlo, monospace; letter-spacing: .02em; font-variant-numeric: tabular-nums; user-select: all; -webkit-user-select: all }
+  a.call { display: block; background: var(--go); color: var(--go-ink); text-decoration: none; font-weight: 700; font-size: 1.15rem; padding: 16px; border-radius: 14px }
+  a.call:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px }
+  p { margin: 0; color: var(--muted); font-size: .92rem }
+</style>
+</head>
+<body>
+<main id="m">
+  <p>Loading…</p>
+</main>
+<script>
+  (function () {
+    var raw = decodeURIComponent((location.hash || "").slice(1));
+    var d = raw.replace(/[^\d+]/g, "");
+    var digits = d.replace(/\D/g, "");
+    var m = document.getElementById("m");
+    if (digits.length < 10 || digits.length > 13) { m.innerHTML = "<p>This link has no phone number in it. Go back and tap Call again.</p>"; return; }
+    if (digits.length === 10) d = "+91" + digits;
+    else if (d.charAt(0) !== "+") d = "+" + digits;
+    var tel = "tel:" + d;
+    var shown = d.length === 13 && d.indexOf("+91") === 0 ? "+91 " + d.slice(3, 8) + " " + d.slice(8) : d;
+    m.innerHTML = '<p>Calling</p><div class="num"></div><a class="call" id="go">Call now</a>' +
+      '<p>If your phone app didn\'t open by itself, tap Call now. After the call, go back to the board to write your call notes.</p>';
+    m.querySelector(".num").textContent = shown;
+    var a = document.getElementById("go"); a.href = tel;
+    // Open the phone app straight away, once per page load (a reload or coming back here doesn't dial again).
+    try { if (!sessionStorage.getItem("dialed:" + d)) { sessionStorage.setItem("dialed:" + d, "1"); location.href = tel; } }
+    catch (e) { location.href = tel; }
+  })();
+</script>
+</body>
+</html>
